@@ -21,11 +21,12 @@
   "category": "free", 
   "image": "(파일, multipart/form-data)"
 }
-# category 옵션: free, question, promotion, news, hot
+```
+- **category 옵션**: free, question, promotion, news, hot
 
-# HOT 게시판 글은 직접 작성 불가
+- **HOT 게시판 글은 직접 작성 불가**
 
-Response:
+```Response:
 {
   "id": 1,
   "author_name": "익명",
@@ -36,14 +37,15 @@ Response:
   "created_at": "2025-08-21T03:00:00.000Z",
   "updated_at": "2025-08-21T03:00:00.000Z"
 }
+```
 ## 2️⃣ 게시글 목록 조회 (Read)
-URL: /
+- **URL:**: /
 
-Method: GET
+- **Method**: GET
 
-Query Parameters:
+- **Query Parameters**:
 
-category: free | question | promotion | news | hot
+- 'category': 'free' | 'question' | 'promotion' | 'news' | 'hot'
 page: 1
 limit: 10
 search: 검색어
@@ -54,7 +56,6 @@ sort: asc | desc
 # 다른 카테고리 → 페이지네이션, 검색, 정렬 가능
 
 Response:
-[
   {
     "id": 1,
     "author_name": "익명",
@@ -67,7 +68,7 @@ Response:
     "created_at": "2025-08-21T03:00:00.000Z",
     "updated_at": "2025-08-21T03:00:00.000Z"
   }
-]
+
 
 
 ## 3️⃣ 게시글 수정 (Update)
