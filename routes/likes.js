@@ -1,43 +1,59 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../models/db');
+const LikeModel = require('../models/likeModel');
 
+// 좋아요 추가
 router.post('/', async (req, res) => {
   const { post_id, author_name } = req.body;
-  if (!post_id || !author_name) return res.status(400).json({ error: 'post_id와 author_name 필요' });
+  if (!post_id || !author_name)
+    return res.status(400).json({ error: 'post_id와 author_name 필요' });
 
   try {
-    const result = await pool.query(
-      'INSERT INTO likes(post_id, author_name) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING *',
-      [post_id, author_name]
-    );
-    res.json(result.rows[0] || { message: '이미 좋아요함' });
+    const like = await LikeModel.addLike(post_id, author_name);
+    if (!like) return res.json({ message: '이미 좋아요함' });
+    res.json(like);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// 좋아요 삭제
 router.delete('/', async (req, res) => {
   const { post_id, author_name } = req.body;
+  if (!post_id || !author_name)
+    return res.status(400).json({ error: 'post_id와 author_name 필요' });
+
   try {
-    const result = await pool.query(
-      'DELETE FROM likes WHERE post_id=$1 AND author_name=$2 RETURNING *',
-      [post_id, author_name]
-    );
-    if (!result.rows.length) return res.status(404).json({ error: '좋아요 없음' });
+    const like = await LikeModel.removeLike(post_id, author_name);
+    if (!like) return res.status(404).json({ error: '좋아요 없음' });
     res.json({ message: '좋아요 취소됨' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// 특정 글 좋아요 수 조회
 router.get('/', async (req, res) => {
   const { post_id } = req.query;
   if (!post_id) return res.status(400).json({ error: 'post_id 필요' });
 
   try {
-    const result = await pool.query('SELECT COUNT(*) FROM likes WHERE post_id=$1', [post_id]);
-    res.json({ likes: parseInt(result.rows[0].count) });
+    const likes = await LikeModel.countLikes(post_id);
+    res.json({ likes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 특정 사용자가 글을 좋아요했는지 확인
+router.get('/check', async (req, res) => {
+  const { post_id, author_name } = req.query;
+  if (!post_id || !author_name)
+    return res.status(400).json({ error: 'post_id와 author_name 필요' });
+
+  try {
+    const liked = await LikeModel.isLikedByUser(post_id, author_name);
+    res.json({ liked });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

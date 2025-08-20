@@ -26,7 +26,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // 라우터 연결
-app.use('/posts', require('./routes/posts'));       // 게시글
+app.use('/posts', require('./routes/posts'));       // 게시판
 app.use('/comments', require('./routes/comments')); // 댓글
 app.use('/likes', require('./routes/likes'));       // 좋아요
 app.use('/faq', require('./routes/faq'));           // FAQ
