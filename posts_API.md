@@ -26,7 +26,8 @@
 
 - **HOT 게시판 글은 직접 작성 불가**
 
-```Response:
+```
+- **Response**:
 {
   "id": 1,
   "author_name": "익명",
@@ -55,7 +56,8 @@
 
 - **다른 카테고리** → 페이지네이션, 검색, 정렬 가능
 
-```Response:
+```
+- **Response**:
   {
     "id": 1,
     "author_name": "익명",
@@ -78,7 +80,8 @@
 
 - **설명**: 글 수정 (이미지 포함 가능)
 
-```Request Body:
+```
+- **Request Body**:
 {
   "title": "수정된 제목",
   "content": "수정된 내용",
@@ -88,7 +91,8 @@
 ```
 - **주의**: HOT 게시판 글은 수정 불가
 
-```Response:
+```
+- **Response**:
 {
   "id": 1,
   "author_name": "익명",
@@ -107,7 +111,8 @@
 
 - **설명**: 글 삭제
 
-```Response:
+```
+- **Response**:
 {
   "message": "글이 삭제되었습니다."
 }
