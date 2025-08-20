@@ -45,7 +45,7 @@
 
 - **Query Parameters**:
 
-- 'category': 'free' | 'question' | 'promotion' | 'news' | 'hot'
+- 'category': `free` | `question` | `promotion` | `news` | `hot`
 page: 1
 limit: 10
 search: 검색어
