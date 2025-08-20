@@ -1,4 +1,4 @@
-# JOBA 프로젝트 – 게시판 API 명세서 (Frontend용)
+# 게시판 API 명세서 (Frontend용)
 
 ## 📌 기본 정보
 - **Base URL:** `http://localhost:3001/posts`
