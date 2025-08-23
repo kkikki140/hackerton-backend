@@ -108,6 +108,7 @@
 - `200 OK` 성공
 - `500 Internal Server Error` 서버 오류
 
+
 **🔥​HOT 게시판(category=hot)**
 - **조회 방식**: `GET` /`posts?category=hot&page=1&limit=10`
 
@@ -116,6 +117,7 @@
 - **주의**: 직접 작성/수정 불가, 페이지네이션 가능
 
 **3. 특정 게시글 조회**
+
 
 - **URL**:`/posts/:id`
   → 조회수 자동 +1
@@ -217,6 +219,7 @@
 - `200 Created` 성공
 - `404 Bad Request` 필수값 누락/잘못된 카테고리
 
+
 **👍​좋아요**
 
 **1. 좋아요 추가**
@@ -307,6 +310,7 @@
 - `200 OK` 성공
 
 - `400 Bad Request` 필수값 누락
+
 
 **✏️​​댓글**
 
@@ -421,7 +425,7 @@
 
 - 조회수, 좋아요 정보는 자동 업데이트
 
-- 게시판 기능은 free, promotion-, promotion, news, hot 총 5개 카테고리로 분류
+- 게시판 기능은 free, promotion-personal, promotion-official, news, hot 총 5개 카테고리로 분류
 
 ---
 
