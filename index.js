@@ -1,11 +1,10 @@
-const express = require("express");
-const { Pool } = require("pg");
-const path = require("path");
-require("dotenv").config({ path: './.env' });
+const express = require('express');
+const path = require('path');
+const { Pool } = require('pg');
+require('dotenv').config();
 
 const app = express();
 const port = 3001;
-
 
 // PostgreSQL 연결
 const pool = new Pool({
@@ -48,12 +47,6 @@ app.get("/", async (req, res) => {
 });
 
 
-// 서버 실행
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
-
-
 // mypage 글 조회 (author_name으로 필터링)
 app.get("/mypage/posts", async (req, res) => {
   try {
@@ -76,5 +69,11 @@ app.get("/mypage/posts", async (req, res) => {
 });
 
 
-// pool을 외부에서도 사용할 수 있게 export
+// 서버 실행
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
+
+
+// pool을 외부에서도 사용 가능하게 export
 module.exports = { app, pool };

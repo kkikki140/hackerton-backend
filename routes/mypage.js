@@ -4,20 +4,9 @@ const pool = require('../models/db'); // pg Pool
 
 
 // 마이페이지 조회
-router.get('/mypage', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const posts = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
-    const comments = await pool.query('SELECT * FROM comments ORDER BY created_at DESC');
-const express = require('express');
-const router = express.Router();
-const pool = require('../models/db'); // pg Pool
-
-// -------------------------------
-// GET /mypage - 마이페이지 조회
-// -------------------------------
-router.get('/mypage', async (req, res) => {
-  try {
-    // 게시글 조회
+    // 게시글 조회 (추후 사용자별 필터링 가능: WHERE user_id = $1)
     const postsResult = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
     const posts = postsResult.rows;
 
@@ -25,7 +14,7 @@ router.get('/mypage', async (req, res) => {
     const commentsResult = await pool.query('SELECT * FROM comments ORDER BY created_at DESC');
     const comments = commentsResult.rows;
 
-    // 좋아요 수 조회
+    // 좋아요 총합 조회
     const likesResult = await pool.query('SELECT COUNT(*) AS total_likes FROM likes');
     const likes = likesResult.rows[0]?.total_likes || 0;
 
@@ -33,7 +22,7 @@ router.get('/mypage', async (req, res) => {
     const eventsResult = await pool.query('SELECT * FROM interested_events ORDER BY event_date');
     const interested_events = eventsResult.rows;
 
-    // 프로필 조회
+    // 프로필 조회 (현재는 단일 프로필, 추후 사용자별로 확장 가능)
     const profileResult = await pool.query('SELECT * FROM profile LIMIT 1');
     if (!profileResult.rows[0]) {
       return res.status(404).json({ error: "프로필 정보가 없습니다." });
@@ -55,9 +44,8 @@ router.get('/mypage', async (req, res) => {
   }
 });
 
-// -------------------------------
-// PUT /mypage/profile - 프로필 수정
-// -------------------------------
+
+// 프로필 수정
 router.put('/mypage/profile', async (req, res) => {
   const { nickname, bio, avatar_url } = req.body;
 
@@ -66,7 +54,7 @@ router.put('/mypage/profile', async (req, res) => {
   }
 
   try {
-    // 프로필 업데이트 (id=1 고정, 하루 운영용)
+    // 프로필 업데이트 (id=1 고정)
     await pool.query(
       'UPDATE profile SET nickname = $1, bio = $2, avatar_url = $3 WHERE id = 1',
       [nickname, bio, avatar_url]
