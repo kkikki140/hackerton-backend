@@ -1,29 +1,85 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../models/db');
+const pool = require('../models/db'); // pg Pool
 
-// 내가 쓴 게시글 조회
-router.get('/posts', async (req, res) => {
-  const { author_name } = req.query; // 쿼리 파라미터: author_name
+
+// 마이페이지 조회
+router.get('/mypage', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, author_name, title, content, created_at, updated_at FROM posts WHERE author_name=$1 ORDER BY created_at DESC',
-      [author_name || '익명']
-    );
-    res.json(result.rows);
+    const posts = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
+    const comments = await pool.query('SELECT * FROM comments ORDER BY created_at DESC');
+const express = require('express');
+const router = express.Router();
+const pool = require('../models/db'); // pg Pool
+
+// -------------------------------
+// GET /mypage - 마이페이지 조회
+// -------------------------------
+router.get('/mypage', async (req, res) => {
+  try {
+    // 게시글 조회
+    const postsResult = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
+    const posts = postsResult.rows;
+
+    // 댓글 조회
+    const commentsResult = await pool.query('SELECT * FROM comments ORDER BY created_at DESC');
+    const comments = commentsResult.rows;
+
+    // 좋아요 수 조회
+    const likesResult = await pool.query('SELECT COUNT(*) AS total_likes FROM likes');
+    const likes = likesResult.rows[0]?.total_likes || 0;
+
+    // 관심 이벤트 조회
+    const eventsResult = await pool.query('SELECT * FROM interested_events ORDER BY event_date');
+    const interested_events = eventsResult.rows;
+
+    // 프로필 조회
+    const profileResult = await pool.query('SELECT * FROM profile LIMIT 1');
+    if (!profileResult.rows[0]) {
+      return res.status(404).json({ error: "프로필 정보가 없습니다." });
+    }
+    const profile = profileResult.rows[0];
+
+    // 최종 응답
+    res.json({
+      profile,
+      posts,
+      comments,
+      likes,
+      interested_events
+    });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 관심 이벤트 조회
-router.get('/events', async (req, res) => {
+// -------------------------------
+// PUT /mypage/profile - 프로필 수정
+// -------------------------------
+router.put('/mypage/profile', async (req, res) => {
+  const { nickname, bio, avatar_url } = req.body;
+
+  if (!nickname || !bio || !avatar_url) {
+    return res.status(400).json({ error: "모든 필드(nickname, bio, avatar_url)를 입력해야 합니다." });
+  }
+
   try {
-    const result = await pool.query(
-      'SELECT * FROM events WHERE is_public=true ORDER BY event_date ASC'
+    // 프로필 업데이트 (id=1 고정, 하루 운영용)
+    await pool.query(
+      'UPDATE profile SET nickname = $1, bio = $2, avatar_url = $3 WHERE id = 1',
+      [nickname, bio, avatar_url]
     );
-    res.json(result.rows);
+
+    // 업데이트 후 최신 프로필 조회
+    const profileResult = await pool.query('SELECT * FROM profile WHERE id = 1');
+    const profile = profileResult.rows[0];
+
+    res.json(profile);
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
