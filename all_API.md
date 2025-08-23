@@ -117,7 +117,7 @@
 
 **3. 특정 게시글 조회**
 
-- **URL**: /:`/posts/:id`
+- **URL**:`/posts/:id`
   → 조회수 자동 +1
 
 - **Method**: `GET`
@@ -140,7 +140,7 @@
 
 **4. 게시글 수정**
 
-- **URL**: /:`/posts/:id`
+- **URL**:`/posts/:id`
 
 - **Method**: `PUT`
 
@@ -174,7 +174,7 @@
 ```
 **5. 게시글 삭제**
 
-- **URL**: /:`/posts/:id`
+- **URL**:`/posts/:id`
 
 - **Method**: `DELETE`
 
@@ -190,7 +190,7 @@
 
 **6. AI 자동 등록**
 
-- **URL**: /:`/posts/ai/create`
+- **URL**:`/posts/ai/create`
 
 - **Method**: `POST`
 
@@ -221,7 +221,7 @@
 
 **1. 좋아요 추가**
 
-- **URL**: /:`/likes`
+- **URL**:`/likes`
 
 - **Method**: `POST`
 
@@ -249,7 +249,7 @@
 
 **2. 좋아요 삭제**
 
-- **URL**: /:`/likes`
+- **URL**:`/likes`
 
 - **Method**: `DELETE`
 
@@ -276,7 +276,7 @@
 
 **3. 특정 글 좋아요 수 조회**
 
-- **URL**: /:`/likes?post_id=1`
+- **URL**:`/likes?post_id=1`
 
 - **Method**: `GET`
 
@@ -293,7 +293,7 @@
 
 **4. 특정 사용자의 좋아요 여부 확인**
 
-- **URL**: /:`/likes/check?post_id=1&author_name=익명`
+- **URL**:`/likes/check?post_id=1&author_name=익명`
 
 - **Method**: `GET`
 
@@ -312,7 +312,7 @@
 
 **1. 댓글 작성**
 
-- **URL**: /:`/comments`
+- **URL**:`/comments`
 
 - **Method**: `POST`
 
@@ -344,7 +344,7 @@
 
 **2. 댓글 목록 조회**
 
-- **URL**: /:`/comments?post_id=1`
+- **URL**:`/comments?post_id=1`
 
 - **Method**: `GET`
 
@@ -365,7 +365,7 @@
 
 **3. 댓글 수정**
 
-- **URL**: /:`/comments/:id`
+- **URL**:`/comments/:id`
 
 - **Method**: `PUT`
 
@@ -393,7 +393,7 @@
 
 **4. 댓글 삭제**
 
-- **URL**: /:`/comments/:id`
+- **URL**:`/comments/:id`
 
 - **Method**: `DELETE`
 
@@ -435,12 +435,12 @@
 - **Request Body:**
 ```json
 {
-  "title": "부산 불꽃축제",       // 필수
-  "description": "광안리 해수욕장에서 열리는 불꽃축제", // 선택
-  "start_date": "2025-10-05",    // 필수 (YYYY-MM-DD)
-  "end_date": "2025-10-05",      // 필수 (YYYY-MM-DD)
-  "location": "부산 광안리 해수욕장", // 선택
-  "is_public": true               // 선택, 기본 true
+  "title": "부산 불꽃축제",  
+  "description": "광안리 해수욕장에서 열리는 불꽃축제", 
+  "start_date": "2025-10-05",
+  "end_date": "2025-10-05",   
+  "location": "부산 광안리 해수욕장", 
+  "is_public": true              
 }
 ```
 
@@ -476,7 +476,7 @@
 - **Query Parameters**:
 
 - public_only | boolean | true → 공개 이벤트만 조회
-- upcoming_or_ongoing | boolean | true → 공개 이벤트만 조회
+- upcoming_or_ongoing | boolean | true → 오늘 기준 진행중/다가오는 일정만 조회
 
 
 - **Response**:
@@ -501,7 +501,7 @@
 
 **3. 특정 이벤트 조회**
 
-- **URL**: /:`/events/:id`
+- **URL**:`/events/:id`
 
 - **Method**: `GET`
 
@@ -527,7 +527,7 @@
 
 **4. 이벤트 수정**
 
-- **URL**: /:`/events/:id`
+- **URL**:`/events/:id`
 
 - **Method**: `PUT`
 
@@ -895,3 +895,4 @@
 - `201 Created` 정상 조회
 - `400 Bad Request` `district` 쿼리 누락
 - `500 Internal Server Error` AI 백엔드 호출 실패
+gi
