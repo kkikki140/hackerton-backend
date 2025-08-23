@@ -573,7 +573,7 @@
 
 **5. 이벤트 삭제**
 
-- **URL**: /:`/events/:id`
+- **URL**:`/events/:id`
 
 - **Method**: `DELETE`
 
