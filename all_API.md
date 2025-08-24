@@ -1004,7 +1004,7 @@
 
 - **URL:**: `/inquiries`
 
-- **Method**: GET
+- **Method**: `GET`
 
 - **설명**: 운영자가 문의 목록과 답변 상태를 확인
 
