@@ -27,13 +27,16 @@
 - **Method:** `POST`
 - **설명:** 새 글 작성 (이미지 첨부 가능)
 - **Request Body (multipart/form-data):**
-```json
+```
 {
   "author_name": "익명",
   "title": "글 제목",
   "content": "글 내용",
   "category": "free", 
-  "image": "(파일, multipart/form-data)"
+  "image": "(파일, multipart/form-data)",
+  "location": "강남구",           
+  "allow_comments": true,         
+  "tags": ["행사", "후기", "IT"]  
 }
 ```
 - **category 옵션**: `free`, `promotion_personal`, `promotion_official`, `news`, `hot`
@@ -45,16 +48,19 @@
 - **Response:**
 ```
 {
-  "id": 1,
-  "author_name": "익명",
-  "title": "글 제목",
-  "content": "글 내용",
+  "id": 12,
+  "author_name": "아무개",
+  "title": "오늘의 행사 후기",
+  "content": "오늘 행사 진짜 재밌었어요!",
   "category": "free",
-  "image_url": "/uploads/123456.jpg",
-  "likes": 0,
+  "image_url": null,
+  "location": "강남구",
+  "allow_comments": true,
+  "tags": ["행사", "후기", "IT"],
   "views": 0,
-  "created_at": "2025-08-21T03:00:00.000Z",
-  "updated_at": "2025-08-21T03:00:00.000Z"
+  "is_deleted": false,
+  "created_at": "2025-08-25T03:00:00Z",
+  "updated_at": "2025-08-25T03:00:00Z"
 }
 ```
 **Status Codes**
@@ -83,8 +89,9 @@
 
 - **설명**: hot게시판 제외 페이지네이션, 검색, 정렬 가능
 
-- **Response**:
+- **Response Example**:
 ```
+  [
   {
     "id": 1,
     "author_name": "익명",
@@ -92,11 +99,16 @@
     "content": "글 내용",
     "category": "free",
     "image_url": "/uploads/123456.jpg",
+    "location": "강남구",
+    "allow_comments": true,
+    "tags": ["행사", "후기", "IT"],
     "likes": 5,
     "views": 12,
     "created_at": "2025-08-21T03:00:00.000Z",
     "updated_at": "2025-08-21T03:00:00.000Z"
   }
+]
+
 ```
 **Status Codes**
 
@@ -119,13 +131,18 @@
 
 - **Method**: `GET`
 
-- **Response**:
+- **Response example**:
 ```
 {
   "id": 1,
   "author_name": "익명",
   "title": "글 제목",
   "content": "글 내용",
+  "category": "free",
+  "image_url": "/uploads/123456.jpg",
+  "location": "강남구",
+  "allow_comments": true,
+  "tags": ["행사", "후기", "IT"],
   "views": 13,
   "likes": 5,
   "created_at": "...",
@@ -150,7 +167,10 @@
   "title": "수정된 제목",
   "content": "수정된 내용",
   "category": "free",
-  "image": "(파일, multipart/form-data)"
+  "image": "(파일, multipart/form-data)",
+  "location": "서초구",
+  "allow_comments": false,
+  "tags": ["세미나", "IT"]
 }
 ```
 - **⚠️주의**: HOT 게시판 글은 수정 불가
@@ -165,6 +185,9 @@
   "content": "수정된 내용",
   "category": "free",
   "image_url": "/uploads/789012.jpg",
+  "location": "서초구",
+  "allow_comments": false,
+  "tags": ["세미나", "IT"],
   "created_at": "2025-08-21T03:00:00.000Z",
   "updated_at": "2025-08-21T03:30:00.000Z"
 }
@@ -181,7 +204,7 @@
 - **Response**:
 ```
 {
-  "message": "글이 삭제되었습니다."
+  "message": "게시글과 해당 댓글이 삭제되었습니다."
 }
 ```
 
@@ -914,3 +937,98 @@
 - `201 Created` 정상 조회
 - `400 Bad Request` `district` 쿼리 누락
 - `500 Internal Server Error` AI 백엔드 호출 실패
+
+
+## 📌 1:1 문의하기
+
+**1. 문의 작성 (사용자)**
+
+- **URL:** `/inquiries`
+- **Method:** `POST`
+- **설명:** 사용자가 이름과 문의 내용을 작성하면 서버에 저장
+- **Request Body:**
+```
+{
+  "user_name": "홍길동",
+  "content": "서비스 이용 중 오류가 발생합니다."
+}
+```
+
+- **Response:**
+```
+{
+  "id": 1,
+  "message": "문의가 등록되었습니다."
+}
+```
+**Status Codes**
+
+- `201 Created` 성공
+
+- `400 Bad Request` 이름 또는 내용 누락
+
+- `500 Internal Server Error` 서버 오류
+
+
+**2. 문의 목록 조회 (운영자용)**
+
+- **URL:**: `/inquiries`
+
+- **Method**: GET
+
+- **설명**: 운영자가 문의 목록과 답변 상태를 확인
+
+- **Response 예시**:
+```
+  [
+  {
+    "id": 1,
+    "user_name": "홍길동",
+    "content": "서비스 오류 문의",
+    "answer": null,
+    "created_at": "2025-08-25T04:00:00.000Z",
+    "answered_at": null
+  },
+  {
+    "id": 2,
+    "user_name": "아무개",
+    "content": "지역 설정 방법 문의",
+    "answer": "상단의 지역 선택 버튼을 클릭하면 됩니다.",
+    "created_at": "2025-08-25T04:10:00.000Z",
+    "answered_at": "2025-08-25T04:12:00.000Z"
+  }
+]
+```
+**Status Codes**
+
+- `200 OK` 성공
+- `500 Internal Server Error` 서버 오류
+
+
+**3. 답변 작성 (운영자용)**
+
+- **URL:** `/inquiries/:id/answer`
+- **Method:** `PUT`
+- **설명:** 특정 문의에 운영자가 답변 작성
+- **Request Body:**
+```
+{
+  "answer": "현재 서버 점검 중이라 오류가 발생했습니다. 곧 해결될 예정입니다."
+}
+```
+
+- **Response:**
+```
+{
+  "message": "답변이 등록되었습니다."
+}
+```
+**Status Codes**
+
+- `201 Created` 성공
+
+- `400 Bad Request` 답변 내용 누락
+
+- `404 Not Found` 해당 ID 문의 없음
+
+- `500 Internal Server Error` 서버 오류

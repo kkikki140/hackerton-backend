@@ -14,7 +14,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 게시판 카테고리
 const validCategories = [
   'free',
   'promotion_personal',
@@ -23,32 +22,37 @@ const validCategories = [
   'hot'
 ];
 
-// 관리자 체크 (AI/관리자용)
 function isAdmin(req) {
   return req.headers['x-admin'] === 'true';
 }
 
-// 사용자/관리자/AI 글 작성
+// 게시글 작성
 router.post('/', upload.single('image'), async (req, res) => {
-  const { author_name, title, content, category, ai_generated } = req.body;
+  const { author_name, title, content, category, ai_generated, location, allow_comments, tags } = req.body;
   const postCategory = validCategories.includes(category) ? category : 'free';
 
-  // HOT 게시판 글 작성 금지
   if (postCategory === 'hot') return res.status(400).json({ error: 'HOT게시판 글은 작성할 수 없습니다.' });
-
-  // 공식 지역 홍보 게시판은 관리자/AI만 작성 가능
   if (postCategory === 'promotion_official' && !(isAdmin(req) || ai_generated === 'true')) {
     return res.status(403).json({ error: '공식 지역 홍보 게시판 글 작성은 관리자/AI만 가능합니다.' });
   }
-
   if (!title || !content) return res.status(400).json({ error: '제목과 내용을 입력해주세요.' });
 
   const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
   try {
     const result = await pool.query(
-      'INSERT INTO posts(author_name, title, content, category, image_url) VALUES($1,$2,$3,$4,$5) RETURNING *',
-      [author_name || '익명', title, content, postCategory, image_url]
+      `INSERT INTO posts(author_name, title, content, category, image_url, location, allow_comments, tags)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [
+        author_name || '익명',
+        title,
+        content,
+        postCategory,
+        image_url,
+        location || null,
+        allow_comments !== undefined ? allow_comments : true,
+        tags || []
+      ]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -56,51 +60,52 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-
-// 글 목록 조회 (카테고리, 페이지네이션, 검색, 정렬)
+// 글 목록 조회
 router.get('/', async (req, res) => {
   let { category, page = 1, limit = 10, search, sort = 'desc' } = req.query;
   page = parseInt(page); limit = parseInt(limit);
   const offset = (page - 1) * limit;
 
   try {
-    let baseQuery, params;
+    let baseQuery = 'SELECT * FROM posts WHERE is_deleted = FALSE';
+    let params = [];
+    const conditions = [];
 
-    if (category === 'hot') {
-      baseQuery = 'SELECT * FROM posts ORDER BY likes DESC, views DESC LIMIT $1 OFFSET $2';
-      params = [limit, offset];
-    } else {
-      baseQuery = 'SELECT * FROM posts';
-      params = [];
-      const conditions = [];
-      if (category && validCategories.includes(category)) { conditions.push(`category = $${params.length+1}`); params.push(category); }
-      if (search) { conditions.push(`title ILIKE $${params.length+1}`); params.push(`%${search}%`); }
-      if (conditions.length) baseQuery += ' WHERE ' + conditions.join(' AND ');
-      baseQuery += ` ORDER BY created_at ${sort.toLowerCase() === 'asc' ? 'ASC' : 'DESC'} LIMIT $${params.length+1} OFFSET $${params.length+2}`;
-      params.push(limit, offset);
+    if (category && validCategories.includes(category)) {
+      conditions.push(`category = $${params.length + 1}`);
+      params.push(category);
     }
+    if (search) {
+      conditions.push(`title ILIKE $${params.length + 1}`);
+      params.push(`%${search}%`);
+    }
+    if (conditions.length) baseQuery += ' AND ' + conditions.join(' AND ');
+
+    baseQuery += ` ORDER BY created_at ${sort.toLowerCase() === 'asc' ? 'ASC' : 'DESC'} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
 
     const result = await pool.query(baseQuery, params);
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-
-// 특정 게시글 조회 (조회수 증가)
+// 특정 글 조회
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('UPDATE posts SET views = views + 1 WHERE id = $1', [id]);
-    const result = await pool.query('SELECT * FROM posts WHERE id = $1', [id]);
+    await pool.query('UPDATE posts SET views = views + 1 WHERE id = $1 AND is_deleted = FALSE', [id]);
+    const result = await pool.query('SELECT * FROM posts WHERE id = $1 AND is_deleted = FALSE', [id]);
     if (!result.rows.length) return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
     res.json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// UPDATE
+// 글 수정
 router.put('/:id', upload.single('image'), async (req, res) => {
   const { id } = req.params;
-  const { title, content, category, ai_generated } = req.body;
+  const { title, content, category, ai_generated, location, allow_comments, tags } = req.body;
   const postCategory = validCategories.includes(category) ? category : 'free';
 
   if (postCategory === 'hot') return res.status(400).json({ error: 'HOT게시판 글은 수정할 수 없습니다.' });
@@ -112,28 +117,40 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
   try {
-    const result = image_url ?
-      await pool.query('UPDATE posts SET title=$1, content=$2, category=$3, image_url=$4, updated_at=NOW() WHERE id=$5 RETURNING *',
-        [title, content, postCategory, image_url, id]) :
-      await pool.query('UPDATE posts SET title=$1, content=$2, category=$3, updated_at=NOW() WHERE id=$4 RETURNING *',
-        [title, content, postCategory, id]);
+    const fields = ['title', 'content', 'category', 'location', 'allow_comments', 'tags', 'updated_at'];
+    const values = [title, content, postCategory, location || null, allow_comments !== undefined ? allow_comments : true, tags || [], new Date()];
+    
+    if (image_url) {
+      fields.splice(3, 0, 'image_url'); // image_url 위치 추가
+      values.splice(3, 0, image_url);
+    }
 
+    const setQuery = fields.map((f, i) => `${f}=$${i + 1}`).join(', ');
+    values.push(id);
+
+    const result = await pool.query(`UPDATE posts SET ${setQuery} WHERE id=$${values.length} AND is_deleted = FALSE RETURNING *`, values);
+    
     if (!result.rows.length) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
     res.json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE
+// 글 삭제 (소프트 삭제 + 댓글 소프트 삭제)
 router.delete('/:id', async (req, res) => {
+  const postId = req.params.id;
   try {
-    const result = await pool.query('DELETE FROM posts WHERE id=$1 RETURNING *', [req.params.id]);
-    if (!result.rows.length) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
-    res.json({ message: '글이 삭제되었습니다.' });
+    const postCheck = await pool.query('SELECT * FROM posts WHERE id = $1', [postId]);
+    if (!postCheck.rows.length) return res.status(404).json({ error: '글을 찾을 수 없습니다.' });
+    if (postCheck.rows[0].is_deleted) return res.status(400).json({ error: '이미 삭제된 글입니다.' });
+
+    await pool.query('UPDATE posts SET is_deleted = TRUE WHERE id = $1', [postId]);
+    await pool.query('UPDATE comments SET is_deleted = TRUE WHERE post_id = $1', [postId]);
+
+    res.json({ message: '게시글과 해당 댓글이 삭제되었습니다.' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-
-// AI가 수집한 행사/뉴스 정보를 자동으로 추가
+// AI 글 작성
 router.post('/ai/create', async (req, res) => {
   const { title, content, category } = req.body;
   if (!title || !content) return res.status(400).json({ error: '제목과 내용을 입력해주세요.' });
