@@ -31,7 +31,7 @@ app.use('/notice', require('./routes/notice'));     // 공지사항
 app.use('/events', require('./routes/events'));     // 이벤트
 app.use('/mypage', require('./routes/mypage'));     // 마이페이지
 app.use('/region', require('./routes/region'));     // 지역 설정 (POST /events 포함)
-
+app.use('/inquiry', require('./routes/inquiry'));   // 1:1 문의
 // 기본 테스트 라우트
 app.get("/", async (req, res) => {
   try {

@@ -914,3 +914,43 @@
 - `201 Created` 정상 조회
 - `400 Bad Request` `district` 쿼리 누락
 - `500 Internal Server Error` AI 백엔드 호출 실패
+
+## 📌 1:1 문의
+
+**1. 이벤트 생성**
+
+- **URL:** `/inquiry`
+- **Method:** `POST`
+
+- **Request Body:**
+```json
+{
+  "name": "홍길동",
+  "message": "문의 내용을 작성합니다."
+}
+```
+- name과 message는 필수 필드
+
+- 누락 시 `400 Bad Request` 반환
+
+- **Response:**
+```
+{
+    "success": true,
+    "inquiry": {
+        "id": 1,
+        "name": "홍길동",
+        "message": "문의 내용을 작성합니다.",
+        "created_at": "2025-08-25T06:45:12.345Z"
+    }
+}
+```
+- `id`: 자동 증가
+
+- `created_at`: 작성 시간
+
+**Status Codes:**
+
+- `201 Created` 요청 성공, 데이터 생성 완료
+- `400 Bad Request`: 필수 필드(name, message) 누락
+- `500 Internal Server Error` 서버 오류
