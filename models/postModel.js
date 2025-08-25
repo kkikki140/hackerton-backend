@@ -23,30 +23,49 @@ const PostModel = {
     return result.rows[0];
   },
 
-  // 게시글 전체 조회 (페이징, 검색, 정렬)
+  // 게시글 전체 조회 
   findAll: async ({ category, page = 1, limit = 10, search, sort = 'desc' }) => {
     const offset = (page - 1) * limit;
-    let baseQuery = 'SELECT * FROM posts WHERE is_deleted = FALSE';
     let params = [];
     const conditions = [];
 
+    let baseQuery = `
+      SELECT p.*, COUNT(c.id) AS comments_count
+      FROM posts p
+      LEFT JOIN comments c ON p.id = c.post_id AND c.is_deleted = FALSE
+      WHERE p.is_deleted = FALSE
+    `;
+
+    // 카테고리 필터
     if (category && validCategories.includes(category) && category !== 'hot') {
       params.push(category);
-      conditions.push(`category = $${params.length}`);
+      conditions.push(`p.category = $${params.length}`);
     }
+
+    // 검색 조건
     if (search) {
       params.push(`%${search}%`);
-      conditions.push(`title ILIKE $${params.length}`);
+      conditions.push(`p.title ILIKE $${params.length}`);
     }
+
     if (conditions.length) baseQuery += ' AND ' + conditions.join(' AND ');
 
+    // HOT 게시판 (좋아요/조회수 기준)
     if (category === 'hot') {
-      baseQuery = 'SELECT * FROM posts WHERE is_deleted = FALSE ORDER BY likes DESC, views DESC LIMIT $1 OFFSET $2';
-      params = [limit, offset];
+      baseQuery += `
+        GROUP BY p.id
+        ORDER BY p.likes DESC, p.views DESC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      `;
     } else {
-      params.push(limit, offset);
-      baseQuery += ` ORDER BY created_at ${sort.toLowerCase() === 'asc' ? 'ASC' : 'DESC'} LIMIT $${params.length - 1} OFFSET $${params.length}`;
+      baseQuery += `
+        GROUP BY p.id
+        ORDER BY p.created_at ${sort.toLowerCase() === 'asc' ? 'ASC' : 'DESC'}
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      `;
     }
+
+    params.push(limit, offset);
 
     const result = await pool.query(baseQuery, params);
     return result.rows;
@@ -54,7 +73,13 @@ const PostModel = {
 
   // 특정 게시글 조회
   findById: async (id) => {
-    const result = await pool.query('SELECT * FROM posts WHERE id=$1 AND is_deleted = FALSE', [id]);
+    const result = await pool.query(`
+      SELECT p.*, COUNT(c.id) AS comments_count
+      FROM posts p
+      LEFT JOIN comments c ON p.id = c.post_id AND c.is_deleted = FALSE
+      WHERE p.id = $1 AND p.is_deleted = FALSE
+      GROUP BY p.id
+    `, [id]);
     return result.rows[0];
   },
 
@@ -83,13 +108,19 @@ const PostModel = {
     values.push(id); // WHERE id=$n
     const setQuery = fields.map((f, i) => `${f}=$${i + 1}`).join(', ');
 
-    const result = await pool.query(`UPDATE posts SET ${setQuery} WHERE id=$${values.length} AND is_deleted = FALSE RETURNING *`, values);
+    const result = await pool.query(
+      `UPDATE posts SET ${setQuery} WHERE id=$${values.length} AND is_deleted = FALSE RETURNING *`,
+      values
+    );
     return result.rows[0];
   },
 
   // 게시글 삭제
   delete: async (id) => {
-    const result = await pool.query('UPDATE posts SET is_deleted = TRUE WHERE id=$1 RETURNING *', [id]);
+    const result = await pool.query(
+      'UPDATE posts SET is_deleted = TRUE WHERE id=$1 RETURNING *',
+      [id]
+    );
     return result.rows[0];
   }
 };

@@ -4,6 +4,7 @@ const pool = require('../models/db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const PostModel = require('../models/postModel'); // 🔥 추가
 
 const uploadDir = 'uploads/';
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
@@ -62,30 +63,10 @@ router.post('/', upload.single('image'), async (req, res) => {
 
 // 글 목록 조회
 router.get('/', async (req, res) => {
-  let { category, page = 1, limit = 10, search, sort = 'desc' } = req.query;
-  page = parseInt(page); limit = parseInt(limit);
-  const offset = (page - 1) * limit;
-
   try {
-    let baseQuery = 'SELECT * FROM posts WHERE is_deleted = FALSE';
-    let params = [];
-    const conditions = [];
-
-    if (category && validCategories.includes(category)) {
-      conditions.push(`category = $${params.length + 1}`);
-      params.push(category);
-    }
-    if (search) {
-      conditions.push(`title ILIKE $${params.length + 1}`);
-      params.push(`%${search}%`);
-    }
-    if (conditions.length) baseQuery += ' AND ' + conditions.join(' AND ');
-
-    baseQuery += ` ORDER BY created_at ${sort.toLowerCase() === 'asc' ? 'ASC' : 'DESC'} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const result = await pool.query(baseQuery, params);
-    res.json(result.rows);
+    const { category, page, limit, search, sort } = req.query;
+    const posts = await PostModel.findAll({ category, page, limit, search, sort }); // 🔥 Model 사용
+    res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -93,13 +74,17 @@ router.get('/', async (req, res) => {
 
 // 특정 글 조회
 router.get('/:id', async (req, res) => {
-  const { id } = req.params;
   try {
-    await pool.query('UPDATE posts SET views = views + 1 WHERE id = $1 AND is_deleted = FALSE', [id]);
-    const result = await pool.query('SELECT * FROM posts WHERE id = $1 AND is_deleted = FALSE', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
-    res.json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const post = await PostModel.findById(req.params.id); // 🔥 Model 사용
+    if (!post) return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+
+    // 조회수 증가
+    await pool.query('UPDATE posts SET views = views + 1 WHERE id = $1 AND is_deleted = FALSE', [req.params.id]);
+
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 글 수정
