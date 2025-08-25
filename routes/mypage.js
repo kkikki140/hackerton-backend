@@ -9,7 +9,10 @@ router.get('/:userId', async (req, res) => {
   try {
     // 1️⃣ 프로필 조회
     const profileResult = await pool.query(
-      'SELECT id, nickname, bio, avatar_url FROM users WHERE id = $1',
+      `SELECT id, nickname, bio, avatar_url,
+              name, email, location, joinDate, birth, gender, phone
+       FROM users
+       WHERE id = $1`,
       [userId]
     );
     const profile = profileResult.rows[0];
@@ -72,7 +75,17 @@ router.get('/:userId', async (req, res) => {
     };
 
     // 최종 응답
-    res.json({ profile, posts, comments, likedPosts, interested_events, statistics });
+    res.json({
+      profile: {
+        ...profile,
+        avatar: profile.avatar_url || '/placeholder.svg?height=80&width=80'
+      },
+      posts,
+      comments,
+      likedPosts,
+      interested_events,
+      statistics
+    });
 
   } catch (err) {
     console.error(err);
@@ -83,7 +96,7 @@ router.get('/:userId', async (req, res) => {
 // 프로필 수정
 router.put('/:userId/profile', async (req, res) => {
   const { userId } = req.params;
-  const { nickname, bio, avatar_url } = req.body;
+  const { nickname, bio, avatar_url, name, email, location, birth, gender, phone } = req.body;
 
   if (!nickname || !bio || !avatar_url) {
     return res.status(400).json({ error: "nickname, bio, avatar_url 필수" });
@@ -91,15 +104,24 @@ router.put('/:userId/profile', async (req, res) => {
 
   try {
     await pool.query(
-      'UPDATE users SET nickname = $1, bio = $2, avatar_url = $3 WHERE id = $4',
-      [nickname, bio, avatar_url, userId]
+      `UPDATE users
+       SET nickname=$1, bio=$2, avatar_url=$3,
+           name=$4, email=$5, location=$6, birth=$7, gender=$8, phone=$9
+       WHERE id=$10`,
+      [nickname, bio, avatar_url, name, email, location, birth, gender, phone, userId]
     );
 
     const profileResult = await pool.query(
-      'SELECT id, nickname, bio, avatar_url FROM users WHERE id = $1',
+      `SELECT id, nickname, bio, avatar_url, name, email, location, joinDate, birth, gender, phone
+       FROM users WHERE id=$1`,
       [userId]
     );
-    res.json(profileResult.rows[0]);
+    const profile = profileResult.rows[0];
+
+    res.json({
+      ...profile,
+      avatar: profile.avatar_url || '/placeholder.svg?height=80&width=80'
+    });
 
   } catch (err) {
     console.error(err);
