@@ -29,6 +29,7 @@ app.use('/posts', require('./routes/posts'));
 app.use('/comments', require('./routes/comments'));
 app.use('/likes', require('./routes/likes'));
 app.use('/faq', require('./routes/faq'));
+app.use('/mypage', require('./routes/mypage'));
 // ... 나머지 라우터 생략
 
 // 서버 실행
