@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
+const cors = require('cors'); // <- 추가
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,9 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
+
+// ⭐️ CORS 설정 (개발 단계 모든 도메인 허용)
+app.use(cors());
 
 // 미들웨어 설정
 app.use(express.json());
@@ -31,7 +35,7 @@ app.use('/notice', require('./routes/notice'));     // 공지사항
 app.use('/events', require('./routes/events'));     // 이벤트
 app.use('/mypage', require('./routes/mypage'));     // 마이페이지
 app.use('/region', require('./routes/region'));     // 지역 설정
-app.use('/inquiries', require('./routes/inquiries'));// 1:1 문의하기  ⭐️ 추가됨
+app.use('/inquiries', require('./routes/inquiries'));// 1:1 문의하기
 
 // 기본 테스트 라우트
 app.get("/", async (req, res) => {
